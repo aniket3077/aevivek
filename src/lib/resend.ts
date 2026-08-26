@@ -21,7 +21,7 @@ export const sendContactEmail = createServerFn({ method: "POST" })
     }
 
     const resend = new Resend(apiKey);
-    const toEmail = process.env["CONTACT_TO_EMAIL"] || "ig@aevivekk.in";
+    const toEmail = process.env["CONTACT_TO_EMAIL"] || "ig@aevivekk.in" || "vj36313@gmail.com";
     const fromEmail = process.env["RESEND_FROM_EMAIL"] || "AE.VIVEK <contact@aevivekk.in>";
 
     try {
