@@ -1,12 +1,44 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { MagneticButton } from "./MagneticButton";
 import { KeyframeDiamond } from "./EditingDecor";
+import { sendContactEmail } from "@/lib/resend";
 
 const FIELD =
   "w-full border-b border-border bg-transparent py-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none transition-colors";
 
 export function Contact() {
+  const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMsg(null);
+
+    const formData = new FormData(e.currentTarget);
+    const data = {
+      name: formData.get("name") as string,
+      email: formData.get("email") as string,
+      projectType: formData.get("projectType") as string,
+      budget: formData.get("budget") as string,
+      details: formData.get("details") as string,
+    };
+
+    try {
+      const res = await sendContactEmail({ data });
+      if (res.success) {
+        setSent(true);
+      } else {
+        setErrorMsg(res.error || "Failed to send message. Please try again.");
+      }
+    } catch (err) {
+      console.error(err);
+      setErrorMsg("An unexpected error occurred. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <section id="contact" className="grain relative border-t border-border py-24 md:py-32">
@@ -46,14 +78,7 @@ export function Contact() {
             </div>
           </div>
 
-          <form
-            id="contact-form"
-            className="grid gap-6 sm:grid-cols-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              setSent(true);
-            }}
-          >
+          <form id="contact-form" className="grid gap-6 sm:grid-cols-2" onSubmit={handleSubmit}>
             <label className="block">
               <span className="label-mono">Name</span>
               <input required name="name" className={FIELD} placeholder="Your name" />
@@ -101,13 +126,19 @@ export function Contact() {
             <div className="sm:col-span-2 flex flex-wrap items-center gap-5">
               <button
                 type="submit"
-                className="bg-primary px-8 py-4 font-mono text-[0.7rem] tracking-[0.22em] text-primary-foreground uppercase transition-colors duration-300 hover:bg-foreground hover:text-background"
+                disabled={loading}
+                className="bg-primary px-8 py-4 font-mono text-[0.7rem] tracking-[0.22em] text-primary-foreground uppercase transition-colors duration-300 hover:bg-foreground hover:text-background disabled:opacity-50"
               >
-                Send Inquiry
+                {loading ? "Sending…" : "Send Inquiry"}
               </button>
               {sent && (
                 <p className="animate-fade-in label-mono text-primary">
-                  Inquiry noted — I'll reply shortly.
+                  Inquiry sent — I'll reply shortly.
+                </p>
+              )}
+              {errorMsg && (
+                <p className="animate-fade-in label-mono text-destructive">
+                  {errorMsg}
                 </p>
               )}
             </div>
