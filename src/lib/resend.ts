@@ -25,7 +25,8 @@ export const sendContactEmail = createServerFn({ method: "POST" })
     const fromEmail = process.env["RESEND_FROM_EMAIL"] || "onboarding@resend.dev";
 
     try {
-      const response = await resend.emails.send({
+      // 1. Send detailed inquiry notification to owner (ig@aevivekk.in)
+      const ownerEmailPromise = resend.emails.send({
         from: fromEmail,
         to: [toEmail],
         replyTo: data.email,
@@ -59,9 +60,52 @@ export const sendContactEmail = createServerFn({ method: "POST" })
         `,
       });
 
-      if (response.error) {
-        console.error("Resend API error:", response.error);
-        return { success: false, error: response.error.message };
+      // 2. Send Thank You email to sender (data.email)
+      const senderThankYouPromise = resend.emails.send({
+        from: fromEmail,
+        to: [data.email],
+        subject: `Thank you for contacting AE.VIVEK`,
+        html: `
+          <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #111; border: 1px solid #e5e7eb; border-radius: 12px; background: #ffffff;">
+            <h2 style="font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 12px; color: #111;">Thank You for Reaching Out, ${escapeHtml(data.name)}!</h2>
+            <p style="font-size: 15px; line-height: 1.6; color: #374151;">
+              Thank you for contacting <strong>AE.VIVEK</strong>. Your inquiry has been received! I'm excited to review your footage and project details.
+            </p>
+            <p style="font-size: 15px; line-height: 1.6; color: #374151;">
+              Here is a copy of your submitted project inquiry:
+            </p>
+            <div style="background: #f9fafb; padding: 16px; border-radius: 8px; border: 1px solid #f3f4f6; margin: 16px 0; font-size: 14px;">
+              <p style="margin: 4px 0;"><strong>Project Type:</strong> ${escapeHtml(data.projectType)}</p>
+              <p style="margin: 4px 0;"><strong>Budget:</strong> ${escapeHtml(data.budget)}</p>
+              <p style="margin: 4px 0;"><strong>Details:</strong> ${escapeHtml(data.details)}</p>
+            </div>
+            <p style="font-size: 15px; line-height: 1.6; color: #374151;">
+              I will review your message and reply as soon as possible.
+            </p>
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+            <p style="font-size: 13px; color: #6b7280; margin: 0;">AE.VIVEK — Nature Videographer & Video Editor</p>
+          </div>
+        `,
+      });
+
+      const [ownerRes, senderRes] = await Promise.allSettled([
+        ownerEmailPromise,
+        senderThankYouPromise,
+      ]);
+
+      if (ownerRes.status === "rejected" || (ownerRes.status === "fulfilled" && ownerRes.value.error)) {
+        const errorMsg =
+          ownerRes.status === "rejected"
+            ? String(ownerRes.reason)
+            : ownerRes.value.error?.message ?? "Failed to send owner notification email.";
+        console.error("Resend owner notification error:", errorMsg);
+        return { success: false, error: errorMsg };
+      }
+
+      if (senderRes.status === "rejected" || (senderRes.status === "fulfilled" && senderRes.value.error)) {
+        const senderErr =
+          senderRes.status === "rejected" ? String(senderRes.reason) : senderRes.value.error?.message;
+        console.warn("Resend thank-you email note (sender copy):", senderErr);
       }
 
       return { success: true };
