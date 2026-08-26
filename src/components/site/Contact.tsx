@@ -20,6 +20,7 @@ export function Contact() {
     const data = {
       name: formData.get("name") as string,
       email: formData.get("email") as string,
+      phone: formData.get("phone") as string,
       projectType: formData.get("projectType") as string,
       budget: formData.get("budget") as string,
       details: formData.get("details") as string,
@@ -86,6 +87,10 @@ export function Contact() {
             <label className="block">
               <span className="label-mono">Email</span>
               <input required type="email" name="email" className={FIELD} placeholder="you@email.com" />
+            </label>
+            <label className="block">
+              <span className="label-mono">Mobile No</span>
+              <input type="tel" name="phone" className={FIELD} placeholder="+1 (555) 000-0000" />
             </label>
             <label className="block">
               <span className="label-mono">Project Type</span>

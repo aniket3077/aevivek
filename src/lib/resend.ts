@@ -4,6 +4,7 @@ import { Resend } from "resend";
 export type ContactFormData = {
   name: string;
   email: string;
+  phone?: string;
   projectType: string;
   budget: string;
   details: string;
@@ -21,7 +22,7 @@ export const sendContactEmail = createServerFn({ method: "POST" })
     }
 
     const resend = new Resend(apiKey);
-    const toEmail = process.env["CONTACT_TO_EMAIL"] || "ig@aevivekk.in" || "vj36313@gmail.com";
+    const toEmail = process.env["CONTACT_TO_EMAIL"] || "ig@aevivekk.in";
     const fromEmail = process.env["RESEND_FROM_EMAIL"] || "AE.VIVEK <contact@aevivekk.in>";
 
     try {
@@ -42,6 +43,10 @@ export const sendContactEmail = createServerFn({ method: "POST" })
               <tr>
                 <td style="padding: 8px 0; font-weight: 600;">Email:</td>
                 <td style="padding: 8px 0;"><a href="mailto:${escapeHtml(data.email)}" style="color: #2563eb;">${escapeHtml(data.email)}</a></td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; font-weight: 600;">Mobile No:</td>
+                <td style="padding: 8px 0;">${escapeHtml(data.phone || "N/A")}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; font-weight: 600;">Project Type:</td>
@@ -82,6 +87,7 @@ export const sendContactEmail = createServerFn({ method: "POST" })
                 Here is a copy of your submitted project inquiry:
               </p>
               <div style="background: #f9fafb; padding: 16px; border-radius: 8px; border: 1px solid #f3f4f6; margin: 16px 0; font-size: 14px;">
+                <p style="margin: 4px 0;"><strong>Mobile No:</strong> ${escapeHtml(data.phone || "N/A")}</p>
                 <p style="margin: 4px 0;"><strong>Project Type:</strong> ${escapeHtml(data.projectType)}</p>
                 <p style="margin: 4px 0;"><strong>Budget:</strong> ${escapeHtml(data.budget)}</p>
                 <p style="margin: 4px 0;"><strong>Details:</strong> ${escapeHtml(data.details)}</p>
